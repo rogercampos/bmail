@@ -1,10 +1,15 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    activesupport (3.2.13)
+      i18n (= 0.6.1)
+      multi_json (~> 1.0)
+    i18n (0.6.1)
     mail (2.5.4)
       mime-types (~> 1.16)
       treetop (~> 1.4.8)
     mime-types (1.23)
+    multi_json (1.7.3)
     polyglot (0.3.3)
     treetop (1.4.12)
       polyglot
@@ -14,4 +19,5 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  activesupport
   mail

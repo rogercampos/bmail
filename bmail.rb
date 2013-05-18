@@ -4,6 +4,8 @@
 require 'mail'
 require 'curses'
 
+require 'active_support/core_ext/date/calculations'
+
 require_relative 'lib/controllers/base_controller'
 require_relative 'lib/controllers/email_list_controller'
 
@@ -27,36 +29,38 @@ class Bmail
   end
 end
 
-bmail = Bmail.new
+class Runner
+  include Curses
 
-include Curses
+  def initialize
+    @bmail = Bmail.new
 
-def onsig(sig)
-  close_screen
-  exit sig
-end
+    trap("TERM") {|sig| onsig(sig) }
 
-trap("TERM") {|sig| onsig(sig) }
+    window = init_screen
+    cbreak
+    nonl
+    noecho
 
+    email_list_c = EmailListController.new(@bmail)
+    email_list_c.view = EmailListView.new(window, email_list_c, origin: [1, 1], width: 37, height: 40)
 
-window = init_screen
-cbreak
-nonl
-noecho
-
-
-email_list_c = EmailListController.new(bmail)
-email_list_c.view = EmailListView.new(email_list_c)
+    email_show_c = EmailListController.new(@bmail)
+    email_show_c.view = EmailListView.new(window, email_list_c, origin: [1, 1], width: 37, height: 40)
 
 
-#layout = Views::Console::Layout.new(window)
+    while true
+      email_list_c.render
 
-while true
-  email_list_c.render
+      refresh
+      sleep 1
+    end
+  end
 
-  a = getch
-  refresh
-  sleep 0.4
+  def onsig(sig)
+    close_screen
+    exit sig
+  end
 end
 
 
