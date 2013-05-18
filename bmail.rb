@@ -3,6 +3,8 @@
 
 require 'mail'
 require 'curses'
+require 'tempfile'
+require 'launchy'
 
 require 'active_support/core_ext/date/calculations'
 
@@ -82,9 +84,11 @@ class Runner
       when 'k'
         @bmail.previous
       when 's'
-        email_list_c.view.scroll += 1
+        email_show_c.view.scroll += 3
       when 'w'
-        email_list_c.view.scroll -= 1
+        email_show_c.view.scroll -= 3
+      when 'o'
+        open_html_email(@bmail.current_email)
       end
 
       window.noutrefresh
@@ -93,6 +97,13 @@ class Runner
 
   def render
     @controllers.each(&:render)
+  end
+
+  def open_html_email(email)
+    tempfile = Tempfile.new([email.subject, ".html"])
+    tempfile.write email.html_part.body.to_s
+    tempfile.flush
+    Launchy.open "file://#{tempfile.path}"
   end
 
   def onsig(sig)
