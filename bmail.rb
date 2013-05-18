@@ -8,6 +8,7 @@ require 'active_support/core_ext/date/calculations'
 
 require_relative 'lib/controllers/base_controller'
 require_relative 'lib/controllers/email_list_controller'
+require_relative 'lib/controllers/email_show_controller'
 
 require_relative 'lib/models/account'
 require_relative 'lib/models/mailbox'
@@ -15,6 +16,7 @@ require_relative 'lib/models/message'
 
 require_relative 'lib/views/base_view'
 require_relative 'lib/views/email_list'
+require_relative 'lib/views/email_show'
 
 
 class Bmail
@@ -38,19 +40,24 @@ class Runner
     trap("TERM") {|sig| onsig(sig) }
 
     window = init_screen
+    start_color
     cbreak
     nonl
     noecho
 
+    init_pair(COLOR_BLUE,COLOR_BLUE,COLOR_BLACK)
+    init_pair(COLOR_RED,COLOR_RED,COLOR_BLACK)
+
     email_list_c = EmailListController.new(@bmail)
-    email_list_c.view = EmailListView.new(window, email_list_c, origin: [1, 1], width: 37, height: 40)
+    email_list_c.view = EmailListView.new(window, email_list_c, origin: [1, 1], width: 37, height: 60)
 
-    email_show_c = EmailListController.new(@bmail)
-    email_show_c.view = EmailListView.new(window, email_list_c, origin: [1, 1], width: 37, height: 40)
+    email_show_c = EmailShowController.new(@bmail)
+    email_show_c.view = EmailShowView.new(window, email_show_c, origin: [38, 1], width: 100, height: 60)
 
 
-    while true
+    loop do
       email_list_c.render
+      email_show_c.render
 
       refresh
       sleep 1
@@ -62,14 +69,3 @@ class Runner
     exit sig
   end
 end
-
-
-
-# last_msg = @account.inbox.emails.last
-# last_msg.text_part.body.decoded
-# last_msg.date
-# last_msg.subject
-# last_msg.to
-# last_msg.from
-# last_msg.cc
-# last_msg.bcc

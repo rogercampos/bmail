@@ -28,6 +28,7 @@ class BaseView
     attrs << Curses::A_BOLD if opts[:bold]
     attrs << Curses::A_UNDERLINE if opts[:underline]
     attrs << Curses::A_BLINK if opts[:blink]
+    attrs << Curses.color_pair(opts[:color]) if opts[:color]
 
     with_attrs(attrs) do
       @window.setpos y+@origin[1], x+@origin[0]
@@ -47,7 +48,7 @@ class BaseView
 
   def assert_in_frame(x, y)
     if x < 0 || y < 0 || x >= @width || y >= @height
-      raise ArgumentError, "#{x}x#{y} coordinates are outside the boundaries of this view"
+      raise ArgumentError, "#{x}x#{y} coordinates are outside the boundaries of this view [#{@width}x#{@height}]"
     end
   end
 
@@ -80,5 +81,11 @@ class BaseView
     shout ox+width-1, oy, "┐"
     shout ox, oy+height-1, "└"
     shout ox+width-1, oy+height-1, "┘"
+  end
+
+  def shout_text(x, y, text)
+    text.split("\n").each.with_index do |line, i|
+      shout x, y+i, line
+    end
   end
 end
