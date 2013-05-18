@@ -1,6 +1,6 @@
 class EmailListController < BaseController
   def render
-    @view.draw emails: emails
+    @view.draw emails: emails, current_email: @bmail.current_email
   end
 
   def emails
