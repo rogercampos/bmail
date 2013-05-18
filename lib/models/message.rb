@@ -83,12 +83,24 @@ class Message
 
   # Parsed MIME message object
   def message
-    require 'mail'
-    request,part = 'RFC822','RFC822'
-    request,part = 'BODY.PEEK[]','BODY[]' if @gmail.peek
-    _body = @gmail.in_mailbox(@mailbox) { @gmail.imap.uid_fetch(uid, request)[0].attr[part] }
-    @message ||= Mail.new(_body)
+    @message ||= begin
+      request,part = 'RFC822','RFC822'
+      request,part = 'BODY.PEEK[]','BODY[]' if @gmail.peek
+      _body = @gmail.in_mailbox(@mailbox) { @gmail.imap.uid_fetch(uid, request)[0].attr[part] }
+      Mail.new(_body)
+    end
   end
+
+  # Caching via memoization of the most used methods
+  %w(subject from to cc bcc date text_part).each do |method|
+    define_method method do
+      unless instance_variable_get("@#{method}")
+        instance_variable_set("@#{method}", message.send(method))
+      end
+      instance_variable_get("@#{method}")
+    end
+  end
+
 
   private
 

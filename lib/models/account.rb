@@ -47,7 +47,7 @@ class Account
   ###########################
 
   def inbox
-    in_label('inbox')
+    @inbox ||= in_label('inbox')
   end
 
   def create_label(name)
@@ -56,8 +56,12 @@ class Account
 
   # List the available labels
   def labels
-    (imap.list("", "%") + imap.list("[Gmail]/", "%")).inject([]) { |labels,label|
-      label[:name].each_line { |l| labels << l }; labels }
+    @labels ||= begin
+      (imap.list("", "%") + imap.list("[Gmail]/", "%")).inject([]) do |labels,label|
+        label[:name].each_line { |l| labels << l }
+        labels
+      end
+    end
   end
 
   # gmail.label(name)

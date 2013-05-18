@@ -1,11 +1,23 @@
 # encoding: utf-8
 class BaseView
+  include ViewHelpers
+  attr_accessor :scroll
+
   def initialize(window, controller, opts)
     @window = window
     @controller = controller
     @width = opts[:width]
     @height = opts[:height]
     @origin = opts[:origin]
+    @scroll = 0
+  end
+
+  def enable_scroll!
+    @scroll_enabled = true
+  end
+
+  def scroll_enabled?
+    !!@scroll_enabled
   end
 
   # The controller tells us to draw a new version of this view
@@ -21,8 +33,24 @@ class BaseView
     raise NotImplementedError
   end
 
+  def shout_without_scroll(x, y, str, opts = {})
+    shout x, y - @scroll, str, opts
+  end
+
   def shout(x, y, str, opts = {})
     assert_in_frame(x, y)
+
+    if scroll_enabled?
+      y = y + @scroll
+      # Don't baypass this window limitations because of the scroll.
+      return if y < 0 || y >= @height
+    end
+
+    # Don't draw outside the real window limits
+    return if outside_visible_area?(x, y)
+
+    str = str.force_encoding("UTF-8")
+    raise ArgumentError, "cannot be called on multi-line strings" if str.split("\n").size > 1
 
     attrs = []
     attrs << Curses::A_BOLD if opts[:bold]
@@ -36,6 +64,11 @@ class BaseView
     end
   end
 
+  def outside_visible_area?(x, y)
+    x+@origin[0] < 0 || x+@origin[0] >= @window.maxx ||
+      y+@origin[1] < 0 || y+@origin[1] >= @window.maxy
+  end
+
   def with_attrs(attrs)
     @window.attrset([attrs].flatten.inject{|res, value| res | value}) unless attrs.empty?
     yield
@@ -47,8 +80,14 @@ class BaseView
   end
 
   def assert_in_frame(x, y)
-    if x < 0 || y < 0 || x >= @width || y >= @height
-      raise ArgumentError, "#{x}x#{y} coordinates are outside the boundaries of this view [#{@width}x#{@height}]"
+    if scroll_enabled?
+      if x < 0 || x >= @width
+        raise ArgumentError, "#{x}x#{y} coordinates are outside the boundaries of this view [#{@width}x#{@height}]"
+      end
+    else
+      if x < 0 || y < 0 || x >= @width || y >= @height
+        raise ArgumentError, "#{x}x#{y} coordinates are outside the boundaries of this view [#{@width}x#{@height}]"
+      end
     end
   end
 
@@ -58,29 +97,6 @@ class BaseView
     else
       str
     end
-  end
-
-  def nice_email_date(email)
-    if email.date.to_time > Date.today.beginning_of_day
-      email.date.to_time.strftime("%R")
-    else
-      email.date.to_time.strftime("%d/%m")
-    end
-  end
-
-  def draw_box(ox, oy, width, height)
-    shout ox+1, oy, "─" * (width-1)
-    shout ox+1, oy+height-1, "─" * (width-1)
-
-    (height-2).times do |ly|
-      shout ox, oy+ly+1, "│"
-      shout ox+width-1, oy+ly+1, "│"
-    end
-
-    shout ox, oy, "┌"
-    shout ox+width-1, oy, "┐"
-    shout ox, oy+height-1, "└"
-    shout ox+width-1, oy+height-1, "┘"
   end
 
   def shout_text(x, y, text)

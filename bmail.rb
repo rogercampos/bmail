@@ -14,6 +14,7 @@ require_relative 'lib/models/account'
 require_relative 'lib/models/mailbox'
 require_relative 'lib/models/message'
 
+require_relative 'lib/views/view_helpers'
 require_relative 'lib/views/base_view'
 require_relative 'lib/views/email_list'
 require_relative 'lib/views/email_show'
@@ -24,10 +25,23 @@ class Bmail
     data = YAML.load_file ".credentials.yml"
     @account = Account.new data['username'], data['password']
     @account.login
+    @current_email_pointer = 0
   end
 
   def account
     @account
+  end
+
+  def current_email
+    account.inbox.emails.reverse[@current_email_pointer]
+  end
+
+  def next
+    @current_email_pointer += 1
+  end
+
+  def previous
+    @current_email_pointer -= 1
   end
 end
 
@@ -47,21 +61,38 @@ class Runner
 
     init_pair(COLOR_BLUE,COLOR_BLUE,COLOR_BLACK)
     init_pair(COLOR_RED,COLOR_RED,COLOR_BLACK)
+    @controllers = []
 
     email_list_c = EmailListController.new(@bmail)
     email_list_c.view = EmailListView.new(window, email_list_c, origin: [1, 1], width: 37, height: 60)
+    @controllers << email_list_c
 
     email_show_c = EmailShowController.new(@bmail)
     email_show_c.view = EmailShowView.new(window, email_show_c, origin: [38, 1], width: 100, height: 60)
+    @controllers << email_show_c
 
 
     loop do
-      email_list_c.render
-      email_show_c.render
+      window.clear
+      render
 
-      refresh
-      sleep 1
+      case getch
+      when 'j'
+        @bmail.next
+      when 'k'
+        @bmail.previous
+      when 's'
+        email_list_c.view.scroll += 1
+      when 'w'
+        email_list_c.view.scroll -= 1
+      end
+
+      window.noutrefresh
     end
+  end
+
+  def render
+    @controllers.each(&:render)
   end
 
   def onsig(sig)

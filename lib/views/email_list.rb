@@ -1,5 +1,10 @@
 # encoding: utf-8
 class EmailListView < BaseView
+  def initialize(*)
+    super
+    enable_scroll!
+  end
+
   # Actually put the graphics into the screen. May be called from the Layout to
   # redraw the same things (no data changed) but to adapt to a new screen
   # disposition (outside layout reescaled, maybe)
