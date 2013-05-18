@@ -16,6 +16,7 @@ require_relative 'lib/models/account'
 require_relative 'lib/models/mailbox'
 require_relative 'lib/models/message'
 
+require_relative 'lib/views/text_parser'
 require_relative 'lib/views/view_helpers'
 require_relative 'lib/views/base_view'
 require_relative 'lib/views/email_list'

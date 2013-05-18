@@ -100,8 +100,17 @@ class BaseView
   end
 
   def shout_text(x, y, text)
-    text.split("\n").each.with_index do |line, i|
-      shout x, y+i, line
+    i = 0
+    text.split("\n").each do |line|
+      if line.length < @width-2
+        shout x, y+i, line
+        i += 1
+      else
+        TextParser.new(line).split_in_length(@width-2).each do |sub_line|
+          shout x, y+i, sub_line
+          i += 1
+        end
+      end
     end
   end
 end
